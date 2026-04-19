@@ -72,4 +72,45 @@ const getAllNotes = async (req, res) => {
   }
 };
 
-module.exports = { createNote , multipleNotes, getAllNotes};
+//// Get note by ID
+const mongoose = require('mongoose');
+
+const getNotesById = async (req, res) => {
+  try {
+    const noteId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(noteId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid note ID",
+        data: null
+      });
+    }
+
+    const note = await Note.findById(noteId);
+
+    if (!note) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found",
+        data: null
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Note fetched successfully",
+      data: note
+    });
+
+  } catch (err) {
+    console.error(err); // 🔥 always log error
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+      data: null
+    });
+  }
+};
+
+module.exports = { createNote , multipleNotes, getAllNotes, getNotesById};
