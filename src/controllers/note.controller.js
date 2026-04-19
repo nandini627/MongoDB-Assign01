@@ -274,4 +274,51 @@ const deleteById = async (req, res) => {
   }
 };
 
-module.exports = { createNote , multipleNotes, getAllNotes, getNotesById, UpdateById , UpdateFieldId , deleteById};
+
+// delete many notes by IDs
+
+const deleteMulti = async (req, res) => {
+  try {
+    const { ids } = req.body;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "IDs array is required and cannot be empty",
+        data: null
+      });
+    }
+
+    const validIds = ids.filter(id => mongoose.Types.ObjectId.isValid(id));
+    const invalidIds = ids.filter(id => !mongoose.Types.ObjectId.isValid(id));
+
+    if (validIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid IDs provided",
+        data: null
+      });
+    }
+
+    const result = await Note.deleteMany({
+      _id: { $in: validIds }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: `${result.deletedCount} notes deleted successfully`,
+      deletedCount: result.deletedCount,
+      invalidIds: invalidIds.length > 0 ? invalidIds : null
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+      data: null
+    });
+  }
+};
+
+module.exports = { createNote , multipleNotes, getAllNotes, getNotesById, UpdateById , UpdateFieldId , deleteById, deleteMulti};
