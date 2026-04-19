@@ -114,7 +114,7 @@ const getNotesById = async (req, res) => {
   }
 };
 
-const mongoose = require('mongoose');
+// petch route to update specific fields of a note
 
 const UpdateById = async (req, res) => {
   try {
@@ -172,5 +172,106 @@ const UpdateById = async (req, res) => {
   }
 };
 
+//// PATCH — Update specific fields
+const mongoose = require('mongoose');
 
-module.exports = { createNote , multipleNotes, getAllNotes, getNotesById, UpdateById };
+const UpdateFieldId = async (req, res) => {
+  try {
+    const noteId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(noteId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid note ID",
+        data: null
+      });
+    }
+
+    const allowedFields = ["title", "content", "category", "isPinned"];
+    const updateData = {};
+
+    Object.keys(req.body).forEach((key) => {
+      if (allowedFields.includes(key)) {
+        updateData[key] = req.body[key];
+      }
+    });
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "No valid fields provided",
+        data: null
+      });
+    }
+
+    const note = await Note.findByIdAndUpdate(
+      noteId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!note) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found",
+        data: null
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Note updated successfully",
+      data: note
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+      data: null
+    });
+  }
+};
+
+//// Delete note by ID
+
+const deleteById = async (req, res) => {
+  try {
+    const noteId = req.params.id;
+
+    if (!mongoose.Types.ObjectId.isValid(noteId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid note ID",
+        data: null
+      });
+    }
+
+    const deletedNote = await Note.findByIdAndDelete(noteId);
+
+    if (!deletedNote) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found",
+        data: null
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Note deleted successfully",
+      data: deletedNote   // ✅ optional but better
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+      data: null
+    });
+  }
+};
+
+module.exports = { createNote , multipleNotes, getAllNotes, getNotesById, UpdateById , UpdateFieldId , deleteById};
