@@ -73,9 +73,10 @@ const getAllNotes = async (req, res) => {
 };
 
 //// Get note by ID
-const mongoose = require('mongoose');
+
 
 const getNotesById = async (req, res) => {
+  
   try {
     const noteId = req.params.id;
 
@@ -113,4 +114,63 @@ const getNotesById = async (req, res) => {
   }
 };
 
-module.exports = { createNote , multipleNotes, getAllNotes, getNotesById};
+const mongoose = require('mongoose');
+
+const UpdateById = async (req, res) => {
+  try {
+    const noteId = req.params.id;
+    const { title, content, category, isPinned } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(noteId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid note ID",
+        data: null
+      });
+    }
+
+    if (!title || !content) {
+      return res.status(400).json({
+        success: false,
+        message: "Title and content are required",
+        data: null
+      });
+    }
+
+    const updateData = { title, content };
+
+    if (category !== undefined) updateData.category = category;
+    if (isPinned !== undefined) updateData.isPinned = isPinned;
+
+    const updatedNote = await Note.findByIdAndUpdate(
+      noteId,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedNote) {
+      return res.status(404).json({
+        success: false,
+        message: "Note not found",
+        data: null
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Note updated successfully",
+      data: updatedNote
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: err.message,
+      data: null
+    });
+  }
+};
+
+
+module.exports = { createNote , multipleNotes, getAllNotes, getNotesById, UpdateById };
